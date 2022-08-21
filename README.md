@@ -12,4 +12,4 @@ I was a mentor this year so not super ambitious.
 * Tweepy
 * Git cmd line
 
-![Screenshot](/repository/assets/screenshot.png?raw=true "Screenshot")
+![Screenshot](https://raw.githubusercontent.com/l33tllama/govhack2022-rainalert/main/screenshot.png "Screenshot")
