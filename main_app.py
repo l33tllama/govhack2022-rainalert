@@ -4,9 +4,8 @@ import csv
 from tinydb import TinyDB, Query
 import json
 import tweepy
-import pathlib
 
-# This file is run on PythonAnywhere as a Flask app
+# This is the program that runs on my local machine but does not run on PythonAnywhere
 
 app = Flask(__name__, static_folder="./static", template_folder="./html")
 app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -15,14 +14,14 @@ all_years_data = []
 last_decade_data = []
 warnings = []
 
+
 # Class for parsing rainfall data and saving to local db for querying
 class RainData:
     rainfall_data = []
     db = None
 
     def __init__(self):
-        db_path = pathlib.Path(__file__).parent.absolute() / "rainfall.db"
-        self.db = TinyDB(db_path)
+        self.db = TinyDB("rainfall.db")
 
     def load_rain_data(self, filename):
         with open(filename, 'r') as data_csv_file:
@@ -188,8 +187,7 @@ class WeatherWarnings:
 
     def __init__(self):
         config = configparser.ConfigParser()
-        config_path = pathlib.Path(__file__).parent.absolute() / "config.ini"
-        config.read(config_path)
+        config.read("config.ini")
         self.api_key = config["Twitter"]['api_key']
         self.api_secret = config['Twitter']['api_secret']
         self.bearer_token = config['Twitter']['bearer_token']
@@ -210,12 +208,15 @@ class WeatherWarnings:
                     tweet_index += 1
         return warnings[:limit]
 
-#if __name__ == "__main__":
-rd = RainData()
-ww = WeatherWarnings()
-warnings = ww.read_warnings(3)
-#rd.load_rain_data("IDCJAC0001_094029/IDCJAC0001_094029_Data1.csv")
-all_years_data = get_all_months(rd)
-last_decade_data = get_last_decade(rd)
-#print(all_years_data)
-#app.run(host="0.0.0.0", port=5001)
+
+# http://www.bom.gov.au/climate/data/index.shtml?zoom=1&lat=-26.9635&lon=133.4635&dp=IDC10002&p_nccObsCode=139&p_display_type=dataFile
+# http://www.bom.gov.au/jsp/ncc/cdio/weatherData/av?p_nccObsCode=139&p_display_type=dataFile&p_startYear=&p_c=&p_stn_num=094029
+if __name__ == "__main__":
+    rd = RainData()
+    ww = WeatherWarnings()
+    warnings = ww.read_warnings(3)
+    #rd.load_rain_data("IDCJAC0001_094029/IDCJAC0001_094029_Data1.csv")
+    all_years_data = get_all_months(rd)
+    last_decade_data = get_last_decade(rd)
+    #print(all_years_data)
+    app.run(host="0.0.0.0", port=5001)
