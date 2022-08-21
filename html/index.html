@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" >
+    <title>Rain Alert</title>
+    <script src="static/js/chart.js"></script>
+    <script src="static/js/chartjs-plugin-trendline.min.js"></script>
+    <script src="static/js/bootstrap.js"></script>
+    <link rel="stylesheet" href="static/css/bootstrap.css">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* https://www.canva.com/colors/color-palettes/winter-rains/ */
+        body{
+            background-color: #ebece0;
+            color: #292400;
+        }
+        .title{
+            color: #ef3340;
+        }
+        .subtitle{
+            color: #677880;
+        }
+        #logo{
+            margin-top: -16px;
+            max-height: 66px;
+        }
+        .tweet-date{
+            color: #677880;
+        }
+        #main{
+            padding-top: 24px;
+        }
+
+    </style>
+</head>
+<body>
+<div class="container" id="main">
+    <p class="display-1 title"><img src="static/img/rainalertlogo.png" id="logo">Rain Alert</p>
+    <p class="display-6 title">TAS Alerts Tweets (contains: "flood")</p>
+    <p>From <a href="https://twitter.com/tasalert">https://twitter.com/tasalert</a></p>
+    <div class="container">
+        <ul class="list-group">
+    {% for warning in warnings %}
+    <li class="list-group-item">{{warning|safe}}</li>
+    {% endfor %}
+            </ul>
+    </div>
+    <br/>
+    <p class="display-6 title">Historic Rainfall 2012-2022</p>
+    <div>
+      <canvas id="last_decade_chart"></canvas>
+    </div>
+    <p class="display-6 title">Historic Rainfall 1882-2022</p>
+    <div>
+      <canvas id="all_years_chart"></canvas>
+    </div>
+    <p class="modal-footer">Made by Leo</p>
+</div>
+</body>
+<script>
+    let get_all_years_data = new Promise(function(resolve, reject){
+        let xhr = new XMLHttpRequest();
+        xhr.open('GET', '/get_all_years_data');
+        xhr.send();
+        xhr.onload = function() {
+            if (xhr.status != 200) { // analyze HTTP status of the response
+                //alert(`Error ${xhr.status}: ${xhr.statusText}`); // e.g. 404: Not Found
+                reject(xhr.status);
+              } else { // show the result
+                //alert(`Done, got ${xhr.response.length} bytes`); // response is the server response
+                //return xhr.response;
+                resolve(xhr.response);
+              }
+        }
+    })
+    let get_last_decade_data = new Promise(function(resolve, reject){
+        let xhr = new XMLHttpRequest();
+        xhr.open('GET', '/get_last_decade_data');
+        xhr.send();
+        xhr.onload = function() {
+            if (xhr.status != 200) { // analyze HTTP status of the response
+                //alert(`Error ${xhr.status}: ${xhr.statusText}`); // e.g. 404: Not Found
+                reject(xhr.status);
+              } else { // show the result
+                //alert(`Done, got ${xhr.response.length} bytes`); // response is the server response
+                //return xhr.response;
+                resolve(xhr.response);
+              }
+        }
+    })
+
+    window.onload = function() {
+        console.log("Started")
+        const ctx = document.getElementById('all_years_chart');
+        const ctx_10 = document.getElementById('last_decade_chart');
+
+        get_all_years_data.then(function (resp) {
+            let ayd = JSON.parse(resp)
+            let labels = [];
+            let start_year = 1882;
+            let y = start_year;
+            for (let i = 0; i < ayd.length; i++) {
+                if (i % 12 == 0) {
+                    y += 1
+                }
+                let month = (i % 12) + 1;
+                labels.push(y);
+            }
+            const data = {
+                labels: labels,
+                //legend: {display: false},
+                datasets: [{
+                    label: 'Rainfall (mm)',
+                    backgroundColor: 'rgb(239, 51, 64)',
+                    borderColor: 'rgb(239, 51, 64)',
+                    data: ayd,
+                    trendlineLinear: {
+                        style: "rgb(103 ,120 ,128, 0.9)",
+                        lineStyle: "dotted|solid",
+                        width: 2
+                    }
+                }
+                ]
+            };
+            const config = {
+                type: 'line',
+                data: data,
+                options: {}
+            };
+            const myChart = new Chart(ctx, config);
+        })
+        get_last_decade_data.then(function (resp) {
+            let _10yd = JSON.parse(resp)
+            let labels = [];
+            let start_year = 2012;
+            let y = start_year;
+            for (let i = 0; i < _10yd.length; i++) {
+                if (i % 12 == 0) {
+                    y += 1
+                }
+                let month = (i % 12) + 1;
+                labels.push(month + " " + y);
+            }
+            const data = {
+                labels: labels,
+                //legend: {display: false},
+                datasets: [{
+                    label: 'Rainfall (mm)',
+                    backgroundColor: 'rgb(239, 51, 64)',
+                    borderColor: 'rgb(239, 51, 64)',
+                    data: _10yd,
+                    trendlineLinear: {
+                        style: "rgb(103 ,120 ,128, 0.9)",
+                        lineStyle: "dotted|solid",
+                        width: 2
+                    }
+                }
+                ]
+            };
+            const config = {
+                type: 'line',
+                data: data,
+                options: {}
+            };
+            const myChart2 = new Chart(ctx_10, config);
+        })
+    }
+</script>
+</html>
